@@ -30,7 +30,13 @@ def main ():
                 w2 = str(input())
                 #print(w2)
                 print('')
-                print(Run_DFA(w1, w2))
+                print('Binary:')
+                w = Run_DFA(w1, w2)
+                print(w)
+                print('Odd Dragon Output:')
+                print(Dragon_Output_Odd(w))
+                print('Even Dragon Output:')
+                print(Dragon_Output_Even(w))
                 print('')
                 print('Would you like to run again?')
                 print('1.Yes')
@@ -79,102 +85,89 @@ def main ():
                 else:
                     choice = 4
 
-def Run_DFA (w1, w2):
+def Run_DFA(w1, w2):
     output = ""
-    DFA = [[0,1,2,4],
-           [1,0,3,2],
-           [2,3,0,1],
+    DFA = [[0,1,2,3],
+           [1,0,4,2],
+           [2,4,0,1],
            [3,2,1,0],
            [4,2,1,0]]
     position_value = [[0,1,1,0],
                       [0,-1,1,0],
                       [0,1,-1,0],
                       [0,-1,-1,-1],
-                      [1,-1,-1,1]]
+                      [0,-1,-1,-1]]
+    last_one = 0
     while len(w1) < len(w2):
         w1 = "0" + w1
     while len(w2) < len(w1):
         w2 = "0" + w2
-    w1 = "0" + w1
-    w2 = "0" + w2
-    top = -1
-    bottom = -1
-
+    
     state = 0
-    for idx in range(0, len(w1)):
+    for idx in range(0,len(w1)):
+        print("w1 = " + w1[idx] + "  w2 = " + w2[idx])
         value = 0
-        idx += 1
-        print("state = " + str(state)) 
-        if w1[len(w1)-idx] == "1" and w2[len(w2)-idx] == "0":
+        if w1[idx] == "1" and w2[idx] == "0":
             value = 1
-            if top == -1:
-                top = idx
-        elif w1[len(w1)-idx] == "0" and w2[len(w2)-idx] == "1":
+            if state != 4:
+                last_one = idx
+        elif w1[idx] == "0" and w2[idx] == "1":
             value = 2
-            if bottom == -1:
-                bottom = idx
-        elif w1[len(w1)-idx] == "1" and w2[len(w2)-idx] == "1":
+            if state != 4:
+                last_one = idx
+        elif w1[idx] == "1" and w2[idx] == "1":
             value = 3
-            if top == -1:
-                top = idx
-            if bottom == -1:
-                bottom = idx
+            if state != 4:
+                last_one = idx
         tmp = str(position_value[state][value])
-        #print("value = " + tmp)
         if tmp == "-1":
-            output = "1" + output
-            #print ("Hit")
-            #print(output)
-            sub = "1"
-            if value == 1:
-                for i in range(0,top):
-                    sub += "0"
-                top = -1
-            elif value == 2:
-                for i in range(0,bottom):
-                    sub += "0"
-                bottom = -1
-            elif value == 3:
-                if top != -1 and bottom == -1:
-                    for i in range(0,top):
-                        sub += "0"
-                    top = -1
-                elif top == -1 and bottom != -1:
-                    for i in range(0,bottom):
-                        sub += "0"
-                    bottom = -1
+            if state == 4:
+                if value == 3:
+                    output += "0"
+                    sub = ""
+                    #if len(output)- last_one > 2:
+                    #    sub = "1"
+                    #    for i in range(0, len(output)-last_one-2):
+                    #        sub += "0"
+                    sub += "10"
+                    print(output)
+                    print(sub)
+                    output = Subtraction_DFA(output, sub)
+                    if output[0] == "0":
+                        output = output[1:]
                 else:
-                    if top < bottom:
-                        for i in range(0,bottom):
-                            sub += "0"
-                        sub += "1"
-                        for i in range(0,top):
-                            sub += "0"
-                    elif bottom < top:
-                        for i in range(0,top):
-                            sub += "0"
-                        sub += "1"
-                        for i in range(0,bottom):
-                            sub += "0"
+                    output += "1"
+                    sub = "10"
+                    output = Subtraction_DFA(output, sub)
+                    if output[0] == "0":
+                        output = output[1:]
+            else:
+                if state == 3:
+                    if value == 3:
+                        output += "0"
                     else:
-                        for i in range(0,top):
-                            sub += "0"
-                    top = -1
-                    bottom = -1
-
-            #print(sub)
-            output = Subtraction_DFA(output, sub)
-            output = output[1:]
+                        output += "1"
+                else:
+                    output += "1"
+                sub = "10"
+                output = Subtraction_DFA(output, sub)
+                if output[0] == "0":
+                    output = output[1:]
         else:
-            output = tmp + output
+            output += tmp
+            if state == 0:
+                if value == 3:
+                    output = Addition_DFA(output, "10")
+                    if output[0] == "0":
+                        output = output[1:]
         state = DFA[state][value]
-
-    return output
+        print(output)
+    return output    
 
 def Addition_DFA (w1, w2):
     output = ""
     DFA = [[0,0,0,1],
-           [1,1,1,0]]
+           [0,1,1,1]]
     position_value = [[0,1,1,0],
                       [1,0,0,1]]
     while len(w1) < len(w2):
@@ -197,7 +190,6 @@ def Addition_DFA (w1, w2):
 
         output = str(position_value[state][value]) + output
         state = DFA[state][value]
-
     return output
 
 def Subtraction_DFA (w1, w2):
@@ -226,8 +218,56 @@ def Subtraction_DFA (w1, w2):
 
         output = str(position_value[state][value]) + output
         state = DFA[state][value]
-
     return output
 
+def Dragon_Output_Odd (w):
+    w = "0" + w
+    output = ""
+    DFA = [[0,1],
+           [1,2],
+           [1,2]]
+    position_value = [[0,1],
+                      [0,1],
+                      [1,0]]
+
+    state = 0
+    for idx in range(0, len(w)):
+        value = 0
+        idx += 1
+        if w[len(w)-idx] == "0":
+            value = 0
+        else:
+            value = 1
+
+
+        output = str(position_value[state][value]) + output
+        state = DFA[state][value]
+        
+    return output
+
+def Dragon_Output_Even (w):
+    w = "0" + w
+    output = ""
+    DFA = [[0,2],
+           [1,2],
+           [1,2]]
+    position_value = [[0,1],
+                      [0,1],
+                      [1,0]]
+
+    state = 0
+    for idx in range(0, len(w)):
+        value = 0
+        idx += 1
+        if w[len(w)-idx] == "0":
+            value = 0
+        else:
+            value = 1
+
+
+        output = str(position_value[state][value]) + output
+        state = DFA[state][value]
+
+    return output
 
 main()
